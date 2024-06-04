@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content%}
+   <h1>You have been logged out</h1>
+   <div class="border-top pt-3">
+        <small class="text-muted">
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit">logout</button>
+            </form>
+        </small>
+    </div>
+{% endblock content%}

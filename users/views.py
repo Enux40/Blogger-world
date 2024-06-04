@@ -1,25 +1,56 @@
+from django.contrib.auth import views as auth_views
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm
+from django.urls import reverse_lazy
 
+from django.contrib.auth import logout
 
 def register(request):
     if request.method == 'POST':
+        # get user form
         form = UserRegisterForm(request.POST)
+
+        # validate form
         if form.is_valid():
-            form.save()
+            # get username
             username = form.cleaned_data.get('username')
-            messages.success(request, f'Your Account has been created. You are now able to login.')
+
+            # save the user data to database
+            form.save()
+
+            # toast success
+            messages.success(request, f'Hi {username}, Your Account has been created. You are now able to login.')
+
+            # send to login page
             return redirect('login')
     else:
         form = UserRegisterForm()
-    return render(request, 'users/register.html', {'form': form})
+    return render(request, 'register.html', {'form': form})
 
 
-def logout(request):
-        messages.success(request, f'You have been logged out. Log in again to continue.')
-        return redirect('login')
+class MyLoginView(auth_views.LoginView):
+    template_name = 'login.html'
+
+    def get_success_url(self):
+        # get logged in user username
+        username = self.request.user.username
+
+        # redirect them their posts
+        next_url = reverse_lazy('home', kwargs={'username': username})
+        return next_url
+
+
+class MyLogoutView(auth_views.LogoutView):
+    template_name = 'logout.html'
+
+    def get(self, request):
+        # logout
+        logout(request)
+
+        # redirect to home
+        return redirect('home')
 
     
 @login_required
@@ -43,4 +74,5 @@ def profile(request):
         'u_form': u_form,
         'p_form': p_form
     }
-    return render(request, 'users/profile.html', context)
+    return render(request, 'profile.html', context)
+

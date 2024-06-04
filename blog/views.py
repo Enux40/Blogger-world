@@ -9,17 +9,10 @@ from django.views.generic import (
     DeleteView
 )
 from .models import Post
-  
-
-def home(request):
-    context = {
-        'posts': Post.objects.all()
-    }
-    return render(request, 'blog/home.html', context)
 
 class PostListView(ListView):
     model = Post
-    template_name = 'blog/home.html'
+    template_name = 'user_posts.html'
     context_object_name = 'posts'
     ordering = ['-date_posted']
     paginate_by = 5
@@ -27,7 +20,7 @@ class PostListView(ListView):
 
 class UserPostListView(ListView):
     model = Post
-    template_name = 'blog/user_posts.html'
+    template_name = 'user_posts.html'
     context_object_name = 'posts'
     ordering = ['-date_posted']
     paginate_by = 5
@@ -38,11 +31,13 @@ class UserPostListView(ListView):
 
 
 class PostDetailView(DetailView):
+    template_name = 'post_detail.html'
     model = Post
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
+    template_name = 'post_form.html'
     fields = ['title', 'content']
 
     def form_valid(self, form):
@@ -74,6 +69,7 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         if self.request.user == post.author:
             return True
         return False
+
 
 
 def about(request):
