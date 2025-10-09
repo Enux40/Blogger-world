@@ -14,14 +14,13 @@ A production-ready Django 5 blogging app with user authentication, posts CRUD, p
 ## Local Setup
 
 Prerequisites:
-
 - Python 3.12
 - Pip
 
 1. Create a virtual environment and install dependencies:
 
 ```powershell
-python -m vevn .venv; .\.venv\Scripts\Activate.ps1; pip install -r requirements.txt
+python -m venv .venv; .\.venv\Scripts\Activate.ps1; pip install -r requirements.txt
 ```
 
 2. Configure environment variables:
@@ -43,7 +42,6 @@ python manage.py runserver
 ## Environment Variables
 
 See `.env.example` for all variables. Key ones:
-
 - `SECRET_KEY`
 - `DEBUG`
 - `ALLOWED_HOSTS`
@@ -73,10 +71,10 @@ docker run -e SECRET_KEY=your-secret -e DEBUG=False -e ALLOWED_HOSTS=localhost -
 
 ```powershell
 gcloud run deploy blogger-world \ 
-	--image=gcr.io/<PROJECT_ID>/blogger-world:latest \ 
-	--region=<REGION> \ 
-	--allow-unauthenticated \ 
-	--set-env-vars=SECRET_KEY=your-secret,DEBUG=False,ALLOWED_HOSTS=your-domain.com,CSRF_TRUSTED_ORIGINS=https://your-domain.com,DATABASE_URL=postgres://user:pass@host:5432/db
+  --image=gcr.io/<PROJECT_ID>/blogger-world:latest \ 
+  --region=<REGION> \ 
+  --allow-unauthenticated \ 
+  --set-env-vars=SECRET_KEY=your-secret,DEBUG=False,ALLOWED_HOSTS=your-domain.com,CSRF_TRUSTED_ORIGINS=https://your-domain.com,DATABASE_URL=postgres://user:pass@host:5432/db
 ```
 
 Ensure Cloud SQL or external database connectivity is configured if using managed Postgres.

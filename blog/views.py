@@ -1,6 +1,7 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from django.views.generic import (
     ListView,
     DetailView,
@@ -8,7 +9,7 @@ from django.views.generic import (
     UpdateView,
     DeleteView
 )
-from .models import Post
+from .models import Post, Comment
   
 
 def home(request):
@@ -40,6 +41,11 @@ class UserPostListView(ListView):
 class PostDetailView(DetailView):
     model = Post
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['comments'] = self.object.comments.select_related('author').all()
+        return context
+
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
@@ -47,6 +53,16 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.author = self.request.user
+        # Ensure slug is set before saving
+        if not getattr(form.instance, 'slug', None):
+            from django.utils.text import slugify
+            base_slug = slugify(form.instance.title)
+            slug = base_slug
+            n = 1
+            while Post.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{n}"
+                n += 1
+            form.instance.slug = slug
         return super().form_valid(form)
     
 
@@ -56,6 +72,16 @@ class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def form_valid(self, form):
         form.instance.author = self.request.user
+        # Regenerate slug if title changed to avoid stale slug collisions
+        from django.utils.text import slugify
+        base_slug = slugify(form.instance.title)
+        if form.instance.slug != base_slug:
+            slug = base_slug
+            n = 1
+            while Post.objects.filter(slug=slug).exclude(pk=form.instance.pk).exists():
+                slug = f"{base_slug}-{n}"
+                n += 1
+            form.instance.slug = slug
         return super().form_valid(form)
     
     def test_func(self):
@@ -78,4 +104,15 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
 def about(request):
     return render(request, 'blog/about.html', {'title': 'About'})
+
+
+@login_required
+def add_comment(request, slug):
+    post = get_object_or_404(Post, slug=slug)
+    if request.method == 'POST':
+        content = (request.POST.get('content') or '').strip()
+        if content:
+            Comment.objects.create(post=post, author=request.user, content=content)
+            return redirect('post-detail', slug=slug)
+    return render(request, 'blog/post_detail.html', {'object': post, 'comments': post.comments.all(), 'error': 'Comment cannot be empty'})
 
